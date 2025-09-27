@@ -86,7 +86,7 @@ make docs
 Access the docs (if served by backend or separate doc server):
 
 ```
-http://localhost:8080/swagger/docs.json
+http://localhost:8080/swagger/doc.json
 ```
 
 ---
