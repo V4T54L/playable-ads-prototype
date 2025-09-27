@@ -1,0 +1,722 @@
+basePath: /
+definitions:
+  handler.CreateProjectRequest:
+    properties:
+      description:
+        example: A cool playable ad project.
+        type: string
+      title:
+        example: My First Ad
+        type: string
+    type: object
+  handler.LogEventRequest:
+    properties:
+      event_type:
+        allOf:
+        - $ref: '#/definitions/model.EventType'
+        example: play
+      project_id:
+        example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        type: string
+    type: object
+  handler.LoginRequest:
+    properties:
+      password:
+        example: password123
+        type: string
+      username:
+        example: newuser
+        type: string
+    type: object
+  handler.LoginResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  handler.RefreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  handler.RefreshResponse:
+    properties:
+      access_token:
+        type: string
+    type: object
+  handler.RegisterRequest:
+    properties:
+      password:
+        example: password123
+        type: string
+      username:
+        example: newuser
+        type: string
+    type: object
+  model.AnalyticsEvent:
+    properties:
+      created_at:
+        type: string
+      event_type:
+        $ref: '#/definitions/model.EventType'
+      id:
+        type: string
+      project_id:
+        type: string
+      user_id:
+        type: string
+    type: object
+  model.Asset:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      mime_type:
+        type: string
+      original_filename:
+        type: string
+      project_id:
+        type: string
+      size:
+        type: integer
+      stored_filename:
+        type: string
+    type: object
+  model.EventType:
+    enum:
+    - play
+    - click
+    - impression
+    type: string
+    x-enum-varnames:
+    - EventTypePlay
+    - EventTypeClick
+    - EventTypeImpression
+  model.Job:
+    properties:
+      asset_id:
+        type: string
+      completed_at:
+        type: string
+      created_at:
+        type: string
+      error_message:
+        type: string
+      id:
+        type: string
+      output_path:
+        type: string
+      status:
+        $ref: '#/definitions/model.JobStatus'
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  model.JobStatus:
+    enum:
+    - pending
+    - processing
+    - done
+    - failed
+    type: string
+    x-enum-varnames:
+    - JobStatusPending
+    - JobStatusProcessing
+    - JobStatusDone
+    - JobStatusFailed
+  model.Project:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: string
+    type: object
+  model.User:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  utils.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is the backend API for the Playable Ads Manager Platform.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Playable Ads Manager Backend API
+  version: "1.0"
+paths:
+  /analytics:
+    get:
+      description: Retrieves a list of all analytics events across all projects. This
+        is a public endpoint.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.AnalyticsEvent'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: List all analytics events
+      tags:
+      - analytics
+    post:
+      consumes:
+      - application/json
+      description: Logs an analytics event for a project owned by the user.
+      parameters:
+      - description: Analytics Event Info
+        in: body
+        name: event
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LogEventRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.AnalyticsEvent'
+        "400":
+          description: Invalid request body or event type
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "403":
+          description: Access denied
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Project not found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Log an analytics event
+      tags:
+      - analytics
+  /assets/{id}:
+    get:
+      description: Serves the asset file if it belongs to the requesting user.
+      parameters:
+      - description: Asset ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: Invalid asset ID
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "403":
+          description: Access denied
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Asset not found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Retrieve a specific asset file
+      tags:
+      - assets
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns JWT and refresh tokens.
+      parameters:
+      - description: User Login Credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.LoginResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Log in a user
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Provides a new access token using a valid refresh token.
+      parameters:
+      - description: Refresh Token
+        in: body
+        name: token
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.RefreshResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Invalid or expired refresh token
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Refresh access token
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user account with a username and password.
+      parameters:
+      - description: User Registration Info
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handler.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.User'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "409":
+          description: Username already exists
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - auth
+  /jobs:
+    get:
+      description: Retrieves a list of all rendering jobs for the authenticated user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Job'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List user's rendering jobs
+      tags:
+      - jobs
+  /jobs/{id}:
+    get:
+      description: Retrieves the status of a specific rendering job.
+      parameters:
+      - description: Job ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Job'
+        "400":
+          description: Invalid job ID
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "403":
+          description: Access denied
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Job not found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get job status
+      tags:
+      - jobs
+  /outputs:
+    get:
+      description: Retrieves a list of all completed rendering jobs (outputs) for
+        the authenticated user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Job'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List user's rendered outputs
+      tags:
+      - jobs
+  /projects:
+    get:
+      description: Retrieves a list of all projects belonging to the authenticated
+        user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Project'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List user's projects
+      tags:
+      - projects
+    post:
+      consumes:
+      - application/json
+      description: Creates a new project for the authenticated user.
+      parameters:
+      - description: Project Info
+        in: body
+        name: project
+        required: true
+        schema:
+          $ref: '#/definitions/handler.CreateProjectRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Project'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create a new project
+      tags:
+      - projects
+  /projects/{id}:
+    get:
+      description: Retrieves a single project by its ID, if owned by the user.
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Project'
+        "400":
+          description: Invalid project ID
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "403":
+          description: Access denied
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Project not found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get a specific project
+      tags:
+      - projects
+  /projects/{id}/assets:
+    get:
+      description: Retrieves a list of all assets for a specific project.
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Asset'
+            type: array
+        "400":
+          description: Invalid project ID
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "403":
+          description: Access denied
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Project not found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List assets in a project
+      tags:
+      - assets
+    post:
+      consumes:
+      - multipart/form-data
+      description: Uploads an image or video file to a specific project.
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Asset file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.Asset'
+        "400":
+          description: Invalid project ID or file error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "403":
+          description: Access denied
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Project not found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "413":
+          description: File size exceeds limit
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Upload an asset to a project
+      tags:
+      - assets
+  /projects/{projectId}/render/{assetId}:
+    post:
+      description: Creates and enqueues a rendering job for a specific asset in a
+        project.
+      parameters:
+      - description: Project ID
+        in: path
+        name: projectId
+        required: true
+        type: string
+      - description: Asset ID
+        in: path
+        name: assetId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/model.Job'
+        "400":
+          description: Invalid project or asset ID
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "403":
+          description: Access denied
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "404":
+          description: Project or asset not found
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Enqueue a rendering job
+      tags:
+      - jobs
+securityDefinitions:
+  ApiKeyAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

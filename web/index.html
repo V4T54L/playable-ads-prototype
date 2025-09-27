@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playable Ads Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Simple style for view transitions */
+        #app {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="app"></div>
+    <script type="module" src="/js/main.js"></script>
+</body>
+</html>
