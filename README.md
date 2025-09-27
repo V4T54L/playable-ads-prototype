@@ -11,7 +11,7 @@ A SaaS platform that allows users to create and render playable ads (videos + in
 - Render playable ads combining video and interactive elements
 - REST API backend written in Go
 - PostgreSQL for data persistence
-- Redis for caching and session management
+- Redis for message queue
 - NGINX as reverse proxy and static file server
 - Dockerized development and deployment
 
